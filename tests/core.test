@@ -81,7 +81,7 @@
   echo "\n" & Y
   echo "\n--\n"
 
-exit
+stop
   
 #--------------
 # goto, gosub and conditional (also boolean: 0 is false, anything else is true)

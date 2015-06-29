@@ -849,14 +849,14 @@ namespace Glue
     end function
 
     function _getParts( from as DICTSTRING, keys as string ) as string
-        from &= "/"
-        dim as integer s = 1, e = instr( from, "/" )
+        from &= ","
+        dim as integer s = 1, e = instr( keys, "," )
         dim as string key, result = ""
         while( e > 0 )
-            key = mid( from, s, (e - s) )
+            key = mid( keys, s, (e - s) )
             result = Glue._setPart( result, key, Glue._getPart( from, key ) )
             s = (e + 1)
-            e = instr( s, from, "/" )
+            e = instr( s, from, "," )
         wend
         return result
     end function
