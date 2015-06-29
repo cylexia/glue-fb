@@ -203,7 +203,7 @@ namespace ExtPlatform
                 else
                     e = instr( l, "=" )
                     if( e > 0 ) then
-                        result &= ExtPlatform._lsfValue( (prefix & mid( l, 1, e )) )
+                        result &= ExtPlatform._lsfValue( (prefix & mid( l, 1, (e - 1) )) )
                         result &= ExtPlatform._lsfValue( mid( l, (e + 1) ) )
                     end if
                 end if
