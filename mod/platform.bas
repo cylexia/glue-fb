@@ -21,13 +21,14 @@ namespace ExtPlatform
     declare function init() as integer
     declare function glueCommand( byref w as string, byref vars as string ) as integer
 
-    declare function saveVars( byref vars as string, names as string, prefix as string = "" ) as string
-    declare sub loadVars( byref vars as string, from as string, prefix as string = "" )
-
     declare function _readFromFile( n as string ) as string
     declare function _writeToFile( n as string, v as string ) as string
-    declare function _loadConfig( n as string, prefix as string, byref vars as string ) as string
+    declare function _listFilesIn( path as string ) as string
+    declare function _loadConfig( n as string ) as string
     declare function _createDateSerial() as string
+    
+    declare function _lsfValue( value as string ) as string
+    
 '    declare function _browseTo( page as string, query as string ) as integer
 '    declare function _download( file as string, d as DICTSTRING ptr, vars as DICTSTRING ptr ) as integer
 '    declare function _pcEncode( p as string ) as string
@@ -54,19 +55,18 @@ namespace ExtPlatform
             case "pause"
                 sleep
             case "readfromfile", "load"
-                SET_INTO( _readFromFile( wc ) )
+                SET_INTO( ExtPlatform._readFromFile( wc ) )
             case "writetofile", "save"
-                SET_INTO( _writeToFile( wc, Dict.valueOf( w, "value" ) ) )
+                SET_INTO( ExtPlatform._writeToFile( wc, Dict.valueOf( w, "value" ) ) )
             case "currentpath"
                 SET_INTO( curdir )
             case "setcurrentpathto"
                 chdir wc
+            case "listfilesin"
+                SET_INTO( ExtPlatform._listFilesIn( wc ) )
+                
             case "loadconfigfrom", "loadconfig"
-                SET_INTO( _loadConfig( wc, Dict.valueOf( w, "withprefix" ), vars ) )
-            case "savevars", "savevariables", "stash"
-                SET_INTO( saveVars( vars, wc ) )
-            case "loadvarsfrom", "loadvariablesfrom", "loadvars", "unstash", "unstashfrom"
-                loadVars( vars, wc, Dict.valueOf( w, "withprefix", "" ) )
+                SET_INTO( _loadConfig( wc ) )
             case "dateserial", "getdateserial", "putdateserial"
                 SET_INTO( _createDateSerial() )
             case "setenv", "setenvironmentvariable"
@@ -152,88 +152,66 @@ namespace ExtPlatform
         return "0"
     end function
     
-    function _loadConfig( n as string, prefix as string, byref vars as string ) as string
-        dim key as string = "", value as string
-        dim l as string
-        dim ff as integer = freefile()
+    function _listFilesIn( path as string ) as string
+        if( len( path ) > 0 ) then
+            #ifdef __FB_WIN32__
+                if( mid( path, (len( path ) - 1) ) <> "\" ) then
+                    path &= "\"
+                end if
+            #else
+                if( mid( path, (len( path ) - 1) ) <> "/" ) then
+                    path &= "/"
+                end if
+            #endif
+        end if
+        dim as string file = dir( (path & "*") )
+        dim as string result = "", z
+        dim as integer index = 0, l
+        while( len( file ) > 0 )
+            z = str( index )
+            result &= (chr( (65 + len( z )) ) & z)        ' length always < 65
+            result &= _lsfValue( file )
+            file = dir()
+            index += 1
+        wend
+        result &= _lsfValue( "count" )
+        result &= _lsfValue( str( index ) )        
+        return result
+    end function
+    
+    function _lsfValue( value as string ) as string
+        dim as integer l = len( value )
+        dim as string z = chr( (65 + (l and 15)) )
+        while( l > 15 )
+            l = (l shr 4)
+            z = (chr( (97 + (l and 15)) ) & z)
+        wend
+        return (z & value)
+    end function
+    
+    function _loadConfig( n as string ) as string
+        dim as string key = "", value, l
+        dim as integer ff = freefile(), e
+        dim as string prefix = "", result = ""
         if( open( n for input as ff ) = 0 ) then
             while( not eof( ff ) )
                 line input #ff, l
                 if( (asc( l, 1 ) = 91) and (asc( l, len( l ) ) = 93) ) then  '[ and ]
-                    if( key <> "" ) then
-                        Dict.set( vars, (prefix & key), trim( value, any !" \n\r" ) )
-                    end if
-                    key = mid( l, 2, (len( l ) - 2) )
-                    value = ""
+                    prefix = (mid( l, 2, (len( l ) - 2) ) & ".")
+                elseif( asc( l, 1 ) = 35 ) then
+                    ' comment
                 else
-                    value = (value & l & !"\n")
+                    e = instr( l, "=" )
+                    if( e > 0 ) then
+                        result &= ExtPlatform._lsfValue( (prefix & mid( l, 1, e )) )
+                        result &= ExtPlatform._lsfValue( mid( l, (e + 1) ) )
+                    end if
                 end if
             wend
-            if( (key <> "") ) then
-                Dict.set( vars, (prefix & key), trim( value, any !" \n\r" ) )
-            end if
-            return "1"
         end if
-        return "0"
-    end function
-    
-    function saveVars( byref vars as string, names as string, prefix as string = "" ) as string
-        dim i as integer
-        dim s as string, k as string
-        dim result as string
-        while( names <> "" )
-            i = instr( names, "," )
-            if( i > 0 ) then
-                k = mid( names, 1, (i - 1) )
-                names = mid( names, (i + 1) )
-            else
-                k = names
-                names = ""
-            end if
-            s = (prefix & k)
-            
-            for i = 0 to 1
-                dim l as integer = len( s )
-                dim z as string = chr( (65 + (l and 15)) )
-                while( l > 15 )
-                    l = (l shr 4)
-                    z = (chr( (97 + (l and 15)) ) & z)
-                wend
-                result &= z
-                result &= s
-                s = Dict.valueOf( vars, k )
-            next
-        wend
         return result
     end function
     
-    sub loadVars( byref vars as string, from as string, prefix as string = "" )
-        dim ofs as integer = 1
-        dim k as string
-        
-        while( ofs < len( from ) )
-            dim o as integer
-            dim l as integer = 0
-            dim b as string = mid( from, ofs, 1 )
-            o = asc( b )
-            ofs += 1
-            while( o >= 97 )
-                l = (l + ((o - 97) shl 4))
-                o = asc( mid( from, ofs, 1 ) )
-                ofs += 1
-            wend    
-            l += (o - 65)
-            o = ofs
-            ofs += l
-            if( k = "" ) then
-                k = (prefix & mid( from, o, l ))
-            else
-                Dict.set( vars, k, mid( from, o, l ) )
-                k = ""
-            end if
-        wend
-    end sub
-
     function _createDateSerial() as string
         dim ts as string = (date() & time())
         return (mid( ts, 7, 4 ) & mid( ts, 1, 2 ) & mid( ts, 4, 2 ) & _
