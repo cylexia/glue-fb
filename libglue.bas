@@ -47,7 +47,8 @@ namespace Glue
     
     declare function _setPart( d as string, sk as string, sv as string ) as string
     declare function _getPart( from as string, gk as string ) as string
-
+    declare function _getParts( from as DICTSTRING, keys as string ) as string
+    
     dim plugins( 0 to 14 ) as function( byref as string, byref as string ) as integer
     dim pluginCount as integer
     
@@ -164,6 +165,9 @@ namespace Glue
                             'case "loadpartsfrommdf"
                             '    dim as DICTSTRING td = Utils.mdf( cmdv )
                             '    SET_INTO( Dict.toLSF( td ) )
+                                
+                            case "getparts"
+                                SET_INTO( Glue._getParts( Dict.valueOf( w, "from" ), Dict.valueOf( w, cmd ) ) )
                                 
                             case "echo", "print":
                                 Glue.echo( Dict.valueOf( w, cmd ) )
@@ -324,7 +328,14 @@ namespace Glue
                             case "cutrightof", "cropleftoffof"
                                 SET_INTO( mid( cmdv, (Dict.intValueOf( w, "at", 0 ) + 1) ) )
                             case "findindexof" '"findstring"
-                                SET_INTO( str( (instr( Dict.valueOf( w, "in" ), cmdv ) - 1) ) )
+                                if( Dict.boolValueOf( w, "ignorecase" ) ) then
+                                    SET_INTO( str( (instr(  _ 
+                                            lcase( Dict.valueOf( w, "in" ) ),   _
+                                            lcase( cmdv ) ) - 1)   _
+                                        ) )
+                                else
+                                    SET_INTO( str( (instr( Dict.valueOf( w, "in" ), cmdv ) - 1) ) )
+                                end if
                             case "getlengthof"
                                 SET_INTO( str( len( cmdv ) ) )
                                 
@@ -817,7 +828,7 @@ namespace Glue
             o = asc( from, ofs )
             ofs += 1
             while( o >= 97 )
-                l = (l + ((o - 97) shl 4))
+                l = ((l + (o - 97)) shl 4)
                 o = asc( from, ofs )
                 ofs += 1
             wend    
@@ -837,95 +848,19 @@ namespace Glue
         return ""
     end function
 
-end namespace
-
-/'
-namespace Eval
-    declare function sum( ex as string, byref vars as string ) as single
-    declare function sum1( ex as string, byref vars as string ) as single
-
-    ' add brackets to enforce the precedence
-    function sum( ex as string, byref vars as string ) as single
-        dim x as string = "((((", t as string
-        dim l as integer = len( ex )
-        dim s as integer = 1, e as integer
-        e = instr( ex, " " )
+    function _getParts( from as DICTSTRING, keys as string ) as string
+        from &= "/"
+        dim as integer s = 1, e = instr( from, "/" )
+        dim as string key, result = ""
         while( e > 0 )
-            t = mid( ex, s, (e - s) )
-            select case( t )
-                case "(":	x &= "(((("
-                case ")":	x &= "))))"
-                case "^":	x &= ")^("
-                case "%":	x &= "))%(("
-                case "/":	x &= "))/(("
-                case "*":	x &= "))*(("
-                case "+":	x &= ")))+((("
-                case "-":	x &= ")))-((("
-                case else: x &= t
-            end select
+            key = mid( from, s, (e - s) )
+            result = Glue._setPart( result, key, Glue._getPart( from, key ) )
             s = (e + 1)
-            e = instr( s, ex, " " )
+            e = instr( s, from, "/" )
         wend
-        ' the last item is always going to be a constant, not an operator so just add it
-        x &= mid( ex, s )
-        x &= "))))"
-        'return cint( sum1( x ) )
-        return sum1( x, vars )
+        return result
     end function
 
-    function sum1( ex as string, byref vars as string ) as single
-        dim b as integer = 0, v as single = 0, i as integer
-        dim q as string = "", op as string = "+"
-        dim l as integer = (len( ex ) + 1), iq as single
-        dim c as string
-        for i = 1 to l step 1
-            if( i < l ) then
-                c = mid( ex, i, 1 )
-            else
-                c = !"\n"
-            end if
-            select case( c )
-                case "(":
-                    if( b > 0 ) then
-                        q &= "("
-                    end if
-                    b += 1
-                case ")":
-                    b -= 1
-                    if( b > 0 ) then
-                        q &= ")"
-                    end if
-                    if( b = 0 ) then
-                        q = str( sum1( q, vars ) )
-                    end if
-                case "+", "-", "/", "*", "^", "%", !"\n"
-                    if( b = 0 ) then
-                        if( Dict.containsKey( vars, q ) ) then  ' specific
-                            q = Dict.valueOf( vars, q )         ' to
-                        end if                                  ' glue
-                        iq = csng( q )
-                        select case( op )
-                            case "+":	v += iq
-                            case "-":	v -= iq
-                            case "/":	v /= iq
-                            case "*":	v *= iq
-                            case "^":	v ^= iq
-                            case "%":	v = v mod iq
-                            case !"\n":
-                            case else: return -1
-                        end select
-                        op = c
-                        q = ""
-                    else
-                        q &= c
-                    end if
-                case else:
-                    q &= c
-            end select
-        next i
-        return v
-    end function
 end namespace
-'/
 
 #endif
