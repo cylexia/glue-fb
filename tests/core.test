@@ -81,8 +81,6 @@
   echo "\n" & Y
   echo "\n--\n"
 
-stop
-  
 #--------------
 # goto, gosub and conditional (also boolean: 0 is false, anything else is true)
 #   10 9 8 7 6 4 5 3 2 1 
@@ -99,7 +97,6 @@ stop
     
   :LOOP_TEST_END
   echo "\n--\n"
-  
   
 #--------------
 # testIf

@@ -32,10 +32,8 @@ namespace Glue
     
     ' private
     ' GlueEval built in support...
-    declare function glueEval( byref w as string, byref vars as string ) as integer
-    declare function glueSum( byref w as string, byref vars as string ) as integer
-    declare function glueTest( byref w as string, byref vars as string, negate as integer ) as integer
-    declare function glueNot( byref w as string, byref vars as string ) as integer
+    declare function testIf( byref w as string, byref vars as string, negate as integer ) as integer
+    declare function boolInvert( byref w as string, byref vars as string ) as integer
 '    declare function gluePositionInString( byref w as string, byref vars as string ) as integer
 '    declare function glueLengthOfString( byref w as string, byref vars as string ) as integer
 '    declare function glueCopyFromString( byref w as string, byref vars as string ) as integer
@@ -279,17 +277,10 @@ namespace Glue
                             case "+++"
                                 Glue.runInteractiveMode( Glue._vars )
                                 
-                            ' Plugins are not natively supported, this is GlueEval built in
-                            case "eval"
-                                glueEval( w, Glue._vars )
-'                            case "sum"
-'                                glueSum( w, Glue.vars )
                             case "testif"
-                                glueTest( w, Glue._vars, FALSE )
-                            case "testifnot"
-                                glueTest( w, Glue._vars, TRUE )
+                                Glue.testIf( w, Glue._vars, FALSE )
                             case "not"
-                                glueNot( w, Glue._vars )
+                                Glue.boolInvert( w, Glue._vars )
     '                        case "positioninstring"
     '                            gluePositionInString( w, Glue.vars )
     '                        case "lengthofstring"
@@ -328,7 +319,7 @@ namespace Glue
                             case "cutrightof", "cropleftoffof"
                                 SET_INTO( mid( cmdv, (Dict.intValueOf( w, "at", 0 ) + 1) ) )
                             case "findindexof" '"findstring"
-                                if( Dict.boolValueOf( w, "ignorecase" ) ) then
+                                if( Glue.bool( Dict.valueOf( w, "ignorecase" ) ) ) then
                                     SET_INTO( str( (instr(  _ 
                                             lcase( Dict.valueOf( w, "in" ) ),   _
                                             lcase( cmdv ) ) - 1)   _
@@ -579,58 +570,6 @@ namespace Glue
         close #stdin
         Glue.echo( !"[Glue] left interactive mode\n" )
     end sub
-    
- 	function glueEval( byref w as string, byref vars as string ) as integer
-        rem if is removed as the call to this is built in to save effort
-		rem if( $w['_'] == 'eval' ) {
-            dim v as string
-            v = Dict.valueOf( w, "eval" )
-			if( Dict.containsKey( w, "+" ) ) then 
-                v = str( csng( v ) + csng( Dict.valueOf( w, "+" ) ) )
-			elseif( Dict.containsKey( w, "-" ) ) then 
-                v = str( csng( v ) - csng( Dict.valueOf( w, "-" ) ) )
-			elseif( Dict.containsKey( w, "/" ) ) then 
-                v = str( csng( v ) / csng( Dict.valueOf( w, "/" ) ) )
-			elseif( Dict.containsKey( w, "*" ) ) then 
-                v = str( csng( v ) * csng( Dict.valueOf( w, "*" ) ) )
-			elseif( Dict.containsKey( w, "%" ) ) then 
-                v = str( csng( v ) mod csng( Dict.valueOf( w, "%" ) ) )
-   			elseif( Dict.containsKey( w, "&" ) ) then 
-                dim k as string = "&"
-                while( Dict.containsKey( w, k ) = 1 )
-                    v &= Dict.valueOf( w, k )
-                    k &= "&"
-                wend
-            elseif( Dict.containsKey( w, "?" ) ) then
-                ' index of
-                dim as integer ps = instr( v, Dict.valueOf( w, "?" ) )
-                v = str( (ps - 1) )
-            elseif( Dict.containsKey( w, "{" ) ) then      ' cut from
-                dim as integer i = (Dict.intValueOf( w, "{" ) + 1)
-                if( (i > 0) and (i <= len( v )) ) then
-                    v = mid( v, i )
-                end if
-            elseif( Dict.containsKey( w, "}" ) ) then      ' cut to
-                dim as integer i = Dict.intValueOf( w, "}" )
-                if( (i > 0) and (i <= len( v )) ) then
-                    v = mid( v, 1, i )
-                end if            
-            elseif( Dict.containsKey( w, "$" ) ) then
-                dim o as integer = Dict.intValueOf( w, "$" )
-                if( o = -1 ) then
-                    v = str( len( v ) )
-                elseif( o <= len( v ) ) then
-                    v = mid( v, (o + 1), 1 )
-                else
-                    v = ""
-                end if
-            end if
-            Dict.set( vars, Dict.valueOf( w, "into" ), v )
-            return 1
-		rem } else {
-		rem	return TRUE;
-		rem }
-	end function
 
 '    function glueSum( byref w as string, byref vars as string ) as integer
 '        dim v as string = Dict.valueOf( w, "sum" )
@@ -638,7 +577,7 @@ namespace Glue
 '        return 1
 '    end function
 
-    function glueTest( byref w as string, byref vars as string, negate as integer ) as integer
+    function testIf( byref w as string, byref vars as string, negate as integer ) as integer
         dim v as string = Dict.valueOf( w, Dict.valueOf( w, "_" ) )
         dim r as integer = 0
         'only "is" and "isnot" are supported for strings, all other operations
@@ -697,7 +636,7 @@ namespace Glue
     
     ' not is a special case from and and or as it cannot be tested - it only
     ' has one param.  is a standalone command, which is useful anyway...
-    function glueNot( byref w as string, byref vars as string ) as integer
+    function boolInvert( byref w as string, byref vars as string ) as integer
         dim v as string
         if( Glue.bool( Dict.valueOf( w, "not" ) ) = 0 ) then
             v = "1"
