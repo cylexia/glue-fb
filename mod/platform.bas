@@ -18,7 +18,7 @@
 ' the prefix frame.
 
 namespace ExtPlatform
-    declare function init( pf as string = "platform." ) as integer
+    declare function init() as integer
     declare function glueCommand( byref w as string, byref vars as string ) as integer
 
     declare function saveVars( byref vars as string, names as string, prefix as string = "" ) as string
@@ -33,27 +33,21 @@ namespace ExtPlatform
 '    declare function _pcEncode( p as string ) as string
  '   declare function _pcDecode( p as string ) as string
 
-    dim prefix as string
-    
-    function init( pf as string = "platform." ) as integer
-        prefix = pf
+    function init() as integer
         'if( Glue.addPlugin( @ExtPlatform.glueCommand ) ) then
         '    return ExtFrame.init()
         'end if
+        randomize timer()           ' for getRandomNumberFrom_upTo
         return Glue.addPlugin( @ExtPlatform.glueCommand )
     end function
     
     function glueCommand( byref w as string, byref vars as string ) as integer
         dim c as string = Dict.valueOf( w, "_" ), cs as string
         dim ts as string, tn as single, ti as integer
-        if( prefix <> "" ) then
-            if( instrrev( c, prefix ) = 0 ) then
-                return -1
-            else
-                cs = mid( c, (len( prefix ) + 1) )
-            end if
-        else 
-            cs = c
+        if( instrrev( c, "platform.", 1 ) = 1 ) then
+            cs = mid( c, 10 )
+        else
+            return -1
         end if
         dim as string wc = Dict.valueOf( w, c )
         select case cs
@@ -86,6 +80,10 @@ namespace ExtPlatform
                 end if
                 Glue.setRedirectLabel( ts )
                 return -2       ' redirect to label (can be 1 since above call will ensure redirect)
+            case "getrandomnumberfrom":
+                ti = Dict.intValueOf( w, c )
+                SET_INTO( ((rnd() * (Dict.intValueOf( w, "upto" ) - ti)) + ti) )
+                
 '            case "browseto", "browsetourl"
 '                ts = Dict.valueOf( w, "ondonegoto" )
 '                if( ExtPlatform._browseTo( wc, Dict.valueOf( w, "query", Dict.valueOf( w, "withquery" ) ) ) = 0 ) then
@@ -112,13 +110,13 @@ namespace ExtPlatform
                 
             case "getid"
                 #ifdef __FB_WIN32__
-                    SET_INTO( "desktop/w32" )
+                    SET_INTO( "native/w32" )
                 #endif
                 #ifdef __FB_LINUX__
-                    SET_INTO( "desktop/linux" )
+                    SET_INTO( "native/linux" )
                 #endif
                 #ifdef __FB_DOS__
-                    SET_INTO( "desktop/dos" )
+                    SET_INTO( "native/dos" )
                 #endif
                 
             case else:

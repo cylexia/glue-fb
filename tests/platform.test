@@ -24,10 +24,15 @@
   
 #--------------
 # random number
-#   random number: (a random number 0 >= n > 10)
+#   random numbers: (5 random numbers 10 >= n > 20)
 
-  X = platform.getRandomNumberFrom 0 upTo 10
-  echo "random number: " & X
+  echo "random numbers: "
+  ITR = @ 5
+  :RND:LOOP
+    Y = platform.getRandomNumberFrom 10 upTo 20
+    echo Y & " "
+    ITR = decrease ITR by 1
+  (ITR) goto :RND:LOOP
   echo "\n--\n"
   
 #--------------

@@ -2,10 +2,10 @@
 #include "libglue.bas"
 #include "mod/platform.bas"
 
-ExtPlatform.init()
 Glue.init()
+ExtPlatform.init()
 
-dim as string src = "tests/core.test"
+dim as string src = "tests/platform.test"
 
 dim as DICTSTRING vars = Dict.create()
 
