@@ -261,12 +261,12 @@ namespace Glue
 '                                    le = 0
 '                                end if
                             case "while"
-                                if( Dict.valueOf( w, "while" ) = Dict.valueOf( w, "is" ) ) then
+                                if( Glue.bool( Dict.valueOf( w, "while" ) ) ) then
                                     label = Dict.valueOf( w, "goto" )
                                     le = 0
                                 end if
                             case "until"
-                                if( Dict.valueOf( w, "until" ) <> Dict.valueOf( w, "is" ) ) then
+                                if( Glue.bool( Dict.valueOf( w, "until" ) ) = FALSE ) then
                                     label = Dict.valueOf( w, "goto" )
                                     le = 0
                                 end if
