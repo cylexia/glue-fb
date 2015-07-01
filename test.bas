@@ -13,5 +13,4 @@ Glue.load( Utils.readFile( src ), vars )
 dim as integer result = Glue.run()
 
 print !"\n\n\nGlue finished with result"; result
-sleep
 end
