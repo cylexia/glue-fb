@@ -8,7 +8,7 @@
 #define GLUE_COPYRIGHT "(c)2013-15 by Cylexia"
 
 #ifndef __LIBMAIN__
-#include "../lib/libmain.bas"
+#include "libmain.bas"
 #endif
 
 namespace Glue

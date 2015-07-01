@@ -1,5 +1,5 @@
 #ifndef __LIBGLUE__
-#include "../../../lib/libglue.bas"
+#error Glue needs to be included first
 #endif
 
 ' External platform module.
@@ -83,27 +83,9 @@ namespace ExtPlatform
             case "getrandomnumberfrom":
                 ti = Dict.intValueOf( w, c )
                 SET_INTO( ((rnd() * (Dict.intValueOf( w, "upto" ) - ti)) + ti) )
-                
-'            case "browseto", "browsetourl"
-'                ts = Dict.valueOf( w, "ondonegoto" )
-'                if( ExtPlatform._browseTo( wc, Dict.valueOf( w, "query", Dict.valueOf( w, "withquery" ) ) ) = 0 ) then
-'                    ts = Dict.valueOf( w, "onerrorgoto", ts )
-'                end if
-'                Glue.setRedirectLabel( ts )
-'                return -2       ' redirect to label
-'            case "download"
-'                ts = Dict.valueOf( w, "ondonegoto" )
-'                dim as string res = ""
-'                if( ExtPlatform._download( wc, @w, @vars ) = 0 ) then
-'                    ts = Dict.valueOf( w, "onerrorgoto", ts )
-'                end if
-'                Glue.setRedirectLabel( ts )
-'                return -2       ' redirect to label
-                
-            'case "percentencode":
-            '    SET_INTO( ExtPlatform._pcEncode( Dict.valueOf( w, c ) ) )
-            'case "percentdecode":
-            '    SET_INTO( ExtPlatform._pcDecode( Dict.valueOf( w, c ) ) )
+            
+            case "browseto"
+                Utils.browseTo( wc )
                 
             case "exit"
                 return -254     ' any event loop should see this as exit

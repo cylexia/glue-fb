@@ -2,6 +2,10 @@
 ' (c)2014 by Cylexia
 '
 ' Common functions library
+#ifdef __FB_WIN32__
+    #include once "windows.bi"
+    #include once "win\shellapi.bi"
+#endif
 
 #ifndef __LIBMAIN__
     #ifdef __DEBUG__
@@ -96,6 +100,7 @@ namespace Utils
     declare function replace( src as string, r as string, w as string ) as string
     declare function stripSpecialChars( s as string ) as string
     declare function getEnv( key as string, def as string = "" ) as string
+    declare function browseTo( url as string ) as integer
 end namespace
 
 namespace Dict
@@ -797,6 +802,25 @@ namespace Utils
         else
             return def
         end if
+    end function
+    
+    function browseTo( url as string ) as integer
+        #ifdef __FB_WIN32__
+            ShellExecute( NULL, "open", url, "", "", SW_SHOWNORMAL )
+        #else
+            dim as string cmd
+            if( len( dir( "/usr/bin/xdg-open" ) > 0 ) then
+                cmd = "xdg-open"
+            else if( len( dir( "/usr/bin/gnome-open") ) > 0 ) then 
+                cmd = "gnome-open"
+            else if( len( dir( "/usr/bin/kde-open" ) > 0 ) then
+                cmd = "kde-open"
+            else
+                return FALSE;
+            end if
+            exec( cmd, ("""" & url & """") )
+        #endif
+        return TRUE
     end function
 end namespace
 

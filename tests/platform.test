@@ -72,12 +72,11 @@
   :SKIP_FILE_TEST
   echo "\n--\n"
 
-
 #--------------
 # config file support
 #   Chris Dickens, 36
 
-  N = @ "platform_test.config"
+  N = @ "platform_test.txt"
   OK = platform.writeToFile N value "age=36\n\n[name]\nf=Chris\ns=Dickens"
   FAILED = not OK
   (FAILED) echo "!! Unable to write file\n"
@@ -104,7 +103,7 @@
 #
 
   :EXEC1
-  platform.exec "test.exe" withArgs "Hello, world!" onDoneGoto :EXEC1:OK onErrorGoto :EXEC1:ERR
+  platform.exec "platform-test.exe" withArgs "Hello, world!" onDoneGoto :EXEC1:OK onErrorGoto :EXEC1:ERR
   stop
   
   :EXEC1:OK
