@@ -1,0 +1,22 @@
+command-win32 @echo off
+
+# Libraries
+
+local lib\
+remote ..\lib\
+
+echo Libraries...
+file libmain.bas
+file libglue.bas
+file libqui.bas
+
+# Glue Modules
+
+local mod\
+remote ..\glue\mod\
+
+echo Glue Modules...
+file platform.bas
+file qui.bas
+
+echo Done
