@@ -16,6 +16,14 @@ namespace Glue
     const STOPPED = 1
     const SUSPENDED = 2
     
+	const as integer  _
+        PLUGIN_DONE = 1,  _
+		PLUGIN_NOT_MINE = -1,  _
+		PLUGIN_INLINE_REDIRECT = -2,  _      ' call setRedirectLabel() to set the label
+		PLUGIN_DONE_STOP_OK = -3,  _
+		PLUGIN_DONE_EXIT_ALL = -254
+    
+    
     declare function init() as integer
     declare sub printInfo()
     declare sub printPoweredBy()
